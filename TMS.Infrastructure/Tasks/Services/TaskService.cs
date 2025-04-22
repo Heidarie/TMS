@@ -1,18 +1,14 @@
-﻿using System.Data.Common;
-using Microsoft.EntityFrameworkCore;
-using TMS.Application.Kernel;
+﻿using TMS.Application.Kernel;
 using TMS.Application.Tasks.DTOs;
 using TMS.Application.Tasks.Mappers;
+using TMS.Application.Tasks.Repositories;
 using TMS.Application.Tasks.Services;
 using TMS.Domain.Tasks.Entities;
-using TMS.Infrastructure.EF;
 
 namespace TMS.Infrastructure.Tasks.Services;
 
-class TaskService(TasksDbContext dbContext, IDomainEventDispatcher domainEventDispatcher) : ITaskService
+class TaskService(ITaskRepository taskRepository, IDomainEventDispatcher domainEventDispatcher) : ITaskService
 {
-    DbSet<TaskItem> Tasks => dbContext.TaskItems;
-
     public async Task<TaskDto> CreateTaskAsync(CreateTaskDto dto)
     {
         if (string.IsNullOrWhiteSpace(dto.Name))
@@ -27,77 +23,32 @@ class TaskService(TasksDbContext dbContext, IDomainEventDispatcher domainEventDi
 
         var taskItem = TaskItem.Create(dto.Name, dto.Description);
 
-        Tasks.Add(taskItem);
+        var taskEntity = await taskRepository.CreateTaskAsync(taskItem);
 
-        try
-        {
-            await dbContext.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            throw new InvalidOperationException("Failed to create task.", ex);
-        }
-
-        return TaskDtoMapper.ToDto(taskItem);
+        return TaskDtoMapper.ToDto(taskEntity);
     }
 
-    public async Task<TaskDto> GetTaskByIdAsync(int id)
+    public async Task<IEnumerable<TaskDto>> GetAllTasksAsync()
     {
-        TaskItem? taskItem = null;
+        var tasks = await taskRepository.GetAllTasksAsync();
+        return tasks.Select(t => TaskDtoMapper.ToDto(t!));
+    }
 
-        try
-        {
-            taskItem = await Tasks.SingleOrDefaultAsync(x => x.Id == id);
-        }
-        catch (DbException ex)
-        {
-            throw new InvalidOperationException("Failed to retrieve task.", ex);
-        }
+    public async Task<TaskDto> UpdateTaskAsync(int id)
+    {
+        var taskItem = await taskRepository.GetTaskByIdAsync(id);
 
         if (taskItem == null)
         {
             throw new KeyNotFoundException($"Task with ID {id} not found.");
         }
 
+        taskItem.UpdateProgress();
+
+        await taskRepository.UpdateTaskAsync();
+
+        await domainEventDispatcher.DispatchAsync(taskItem.DomainEvents.ToArray());
+
         return TaskDtoMapper.ToDto(taskItem);
-    }
-
-    public async Task<IEnumerable<TaskDto>> GetAllTasksAsync()
-    {
-        IEnumerable<TaskItem> tasks;
-
-        try
-        {
-            tasks = await Tasks.ToListAsync();
-        }
-        catch (DbException ex)
-        {
-            throw new InvalidOperationException("Failed to retrieve tasks.", ex);
-        }
-
-        return tasks.Select(t => TaskDtoMapper.ToDto(t!));
-    }
-
-    public async Task<TaskDto> UpdateTaskAsync(int id)
-    {
-        try
-        {
-            var taskItem = await Tasks.SingleOrDefaultAsync(x => x.Id == id);
-
-            if (taskItem == null)
-                throw new KeyNotFoundException($"Task with ID {id} not found.");
-
-            taskItem.UpdateProgress();
-
-            await dbContext.SaveChangesAsync();
-
-            await domainEventDispatcher.DispatchAsync(taskItem.DomainEvents.ToArray());
-
-            return TaskDtoMapper.ToDto(taskItem);
-        }
-        catch (DbUpdateException ex)
-        {
-            throw new InvalidOperationException("Failed to update task.", ex);
-        }
     }
 }

@@ -31,6 +31,7 @@ dotnet_search_reference_assemblies = true
 dotnet_separate_import_directive_groups = false
 dotnet_sort_system_directives_first = false
 file_header_template = unset
+dotnet_diagnostic.IDE0005.severity = error
 
 # this. and Me. preferences
 dotnet_style_qualification_for_event = false
@@ -243,3 +244,10 @@ dotnet_naming_style.begins_with_i.required_prefix = I
 dotnet_naming_style.begins_with_i.required_suffix = 
 dotnet_naming_style.begins_with_i.word_separator = 
 dotnet_naming_style.begins_with_i.capitalization = pascal_case
+
+# Unused private members as errors
+dotnet_diagnostic.CS0169.severity = error
+dotnet_diagnostic.CS0649.severity = error
+
+# Unused parameters as errors
+dotnet_diagnostic.CS unused_parameters.severity = error

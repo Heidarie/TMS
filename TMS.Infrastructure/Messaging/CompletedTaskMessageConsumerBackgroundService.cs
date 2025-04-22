@@ -1,9 +1,7 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using TMS.Application.Messaging;
 using TMS.Application.Tasks.Messages;
 using TMS.Infrastructure.Messaging.RabbitMq;
 
@@ -30,9 +28,9 @@ public class CompletedTaskMessageConsumerBackgroundService(ConnectionFactory fac
         {
             var body = ea.Body.ToArray();
             var message = System.Text.Json.JsonSerializer.Deserialize<TaskCompletedMessage>(body)!;
-            
+
             logger.LogInformation("Received task completion event. Id: {Id}, Name: {Name}, Description: {Description}", message.Id, message.Name, message.Description);
-            
+
             channel.BasicAckAsync(ea.DeliveryTag, false, cancellationToken: cancellationToken);
             return Task.CompletedTask;
         };

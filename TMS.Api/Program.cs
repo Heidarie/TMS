@@ -27,6 +27,21 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (BadHttpRequestException ex)
+    {
+        context.Response.StatusCode = StatusCodes.Status400BadRequest;
+        await context.Response.WriteAsJsonAsync(new
+        {
+            details = ex.Message
+        });
+    }
+});
 
 app.MapGet("/api/tasks", async (ITaskService taskService) =>
 {
@@ -70,28 +85,6 @@ app.MapPost("/api/tasks", async (ITaskService taskService, CreateTaskDto dto) =>
     }
 });
 
-app.MapGet("/api/tasks/{id:int}", async (ITaskService taskService, int id) =>
-{
-    try
-    {
-        var task = await taskService.GetTaskByIdAsync(id);
-        return Results.Ok(task);
-    }
-    catch (KeyNotFoundException ex)
-    {
-        return Results.NotFound(ex.Message);
-    }
-    catch (DbException ex)
-    {
-        return Results.Problem(ex.Message);
-    }
-    catch (Exception ex)
-    {
-        return Results.Problem(ex.Message);
-    }
-});
-
-
 app.MapPut("/api/tasks/{id:int}", async (ITaskService taskService, int id) =>
 {
     try
@@ -102,6 +95,10 @@ app.MapPut("/api/tasks/{id:int}", async (ITaskService taskService, int id) =>
     catch (KeyNotFoundException ex)
     {
         return Results.NotFound(ex.Message);
+    }
+    catch (DbUpdateConcurrencyException ex)
+    {
+        return Results.Conflict(ex.Message);
     }
     catch (DbUpdateException ex)
     {
@@ -118,3 +115,5 @@ app.MapPut("/api/tasks/{id:int}", async (ITaskService taskService, int id) =>
 });
 
 app.Run();
+
+public partial class Program { }

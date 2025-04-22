@@ -1,12 +1,13 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+using System.Runtime.CompilerServices;
 using TMS.Infrastructure.EF;
 using TMS.Infrastructure.Kernel;
 using TMS.Infrastructure.Messaging;
 using TMS.Infrastructure.Tasks;
 
+[assembly: InternalsVisibleTo("TMS.Tests")]
 namespace TMS.Infrastructure;
 
 public static class Extensions

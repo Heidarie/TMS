@@ -24,7 +24,7 @@ public class AggregateId<T> : IEquatable<AggregateId<T>>
 
     public override int GetHashCode()
     {
-        return EqualityComparer<T>.Default.GetHashCode(Value);
+        return EqualityComparer<T>.Default.GetHashCode(Value!);
     }
 }
 

@@ -1,0 +1,19 @@
+{
+  "ConnectionStrings": {
+    "PostgreSQL": "Host=127.0.0.1;Port=51405;Database=test_tms_db;Username=test;Password=test"
+  },
+  "RabbitMq": {
+    "HostName": "localhost",
+    "UserName": "guest",
+    "Password": "guest",
+    "Port": "5672"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*"
+}
+     

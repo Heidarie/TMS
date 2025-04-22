@@ -18,7 +18,6 @@ internal static class Extensions
     {
         using var scope = builder.ApplicationServices.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<TasksDbContext>();
-        dbContext.Database.EnsureCreated();
         dbContext.Database.Migrate();
         return builder;
     }

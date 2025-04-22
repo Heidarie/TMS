@@ -30,8 +30,8 @@ public class TaskItem : AggregateRoot
         return taskItem;
     }
 
-    public string Name { get; private set; }
-    public string Description { get; private set; }
+    public string Name { get; private set; } = string.Empty;
+    public string Description { get; private set; } = string.Empty;
     public Status Status { get; private set; } = Status.NotStarted;
 
     public void UpdateProgress()
@@ -47,6 +47,8 @@ public class TaskItem : AggregateRoot
             default:
                 throw new InvalidOperationException("Task is already completed.");
         };
+
+        IncrementVersion();
     }
 
     private void MarkInProgress()

@@ -22,6 +22,9 @@ public class TaskItemConfiguration : IEntityTypeConfiguration<TaskItem>
             .IsRequired()
             .HasMaxLength(500);
 
+        builder.Property(t => t.Version)
+            .IsConcurrencyToken();
+
         builder.Property(t => t.Status).IsRequired();
     }
 }

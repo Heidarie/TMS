@@ -12,14 +12,11 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Debug
 WORKDIR /src
 
-COPY ["TMS.sln", "./"]
-
 COPY ["TMS.Api/TMS.Api.csproj", "TMS.Api/"]
 COPY ["TMS.Domain/TMS.Domain.csproj", "TMS.Domain/"]
 COPY ["TMS.Application/TMS.Application.csproj", "TMS.Application/"]
 COPY ["TMS.Infrastructure/TMS.Infrastructure.csproj", "TMS.Infrastructure/"]
 
-RUN dotnet restore "TMS.sln"
 COPY . .
 WORKDIR "/src/TMS.Api"
 RUN dotnet build "./TMS.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build

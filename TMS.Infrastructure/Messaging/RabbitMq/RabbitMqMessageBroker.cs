@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-using RabbitMQ.Client;
+﻿using RabbitMQ.Client;
 using TMS.Application.Messaging;
 
 namespace TMS.Infrastructure.Messaging.RabbitMq;
