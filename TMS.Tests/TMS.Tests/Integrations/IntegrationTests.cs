@@ -2,15 +2,21 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using RabbitMQ.Client;
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Http.Json;
 using Testcontainers.PostgreSql;
 using Testcontainers.RabbitMq;
 using TMS.Application.Tasks.DTOs;
+using TMS.Application.Tasks.Messages;
 using TMS.Domain.Tasks.Enums;
 using TMS.Infrastructure.EF;
 using TMS.Infrastructure.Messaging;
+using TMS.Infrastructure.Messaging.RabbitMq;
 
 namespace TMS.Tests.Integrations;
 
@@ -27,11 +33,17 @@ public class IntegrationTests : IClassFixture<WebApplicationFactory<Program>>,
         .Build();
 
     private readonly RabbitMqContainer _rabbitMq = new RabbitMqBuilder()
+        .WithImage("rabbitmq:3-management-alpine")
         .WithUsername("guest")
-        .WithPassword("guest").Build();
+        .WithPassword("guest")
+        .WithCleanUp(true)
+        .WithPortBinding(5672, true)
+        .Build();
 
-    private HttpClient _client;
-    private WebApplicationFactory<Program> _factory;
+    private ConcurrentBag<TaskCompletedMessage> _receivedMessages = null!;
+
+    private HttpClient _client = null!;
+    private readonly WebApplicationFactory<Program> _factory;
 
     public IntegrationTests(WebApplicationFactory<Program> factory)
     {
@@ -46,6 +58,8 @@ public class IntegrationTests : IClassFixture<WebApplicationFactory<Program>>,
         var postgresConnStr = _postgres.GetConnectionString();
         var rabbitHost = _rabbitMq.Hostname;
         var rabbitPort = _rabbitMq.GetMappedPublicPort(5672);
+
+        _receivedMessages = new ConcurrentBag<TaskCompletedMessage>();
 
         _client = _factory.WithWebHostBuilder(builder =>
         {
@@ -71,6 +85,13 @@ public class IntegrationTests : IClassFixture<WebApplicationFactory<Program>>,
                 {
                     services.Remove(descriptor);
                 }
+
+                services.AddLogging();
+                services.AddSingleton(_receivedMessages);
+
+                services.AddHostedService(sp => new CompletedTaskMessageConsumerBackgroundServiceTest(
+                    sp.GetRequiredService<ConnectionFactory>(),
+                    sp.GetRequiredService<RabbitMqOptions>(), sp.GetRequiredService<ILogger<CompletedTaskMessageConsumerBackgroundService>>(), _receivedMessages));
 
                 services.AddTasksDbContext(postgresConnStr);
             });
@@ -130,7 +151,7 @@ public class IntegrationTests : IClassFixture<WebApplicationFactory<Program>>,
         var createdTask = await createResponse.Content.ReadFromJsonAsync<TaskDto>();
 
         // Act
-        var updateResponse = await _client.PutAsync($"/api/tasks/{createdTask.Id}", null);
+        var updateResponse = await _client.PutAsync($"/api/tasks/{createdTask!.Id}", null);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
@@ -157,10 +178,10 @@ public class IntegrationTests : IClassFixture<WebApplicationFactory<Program>>,
         // Act, Assert - Get all tasks
         var getAllResponse = await _client.GetAsync("/api/tasks");
         Assert.Equal(HttpStatusCode.OK, getAllResponse.StatusCode);
-        var tasks = await getAllResponse.Content.ReadFromJsonAsync<IEnumerable<TaskDto>>();
+        var tasks = await getAllResponse.Content.ReadFromJsonAsync<List<TaskDto>>();
         Assert.NotNull(tasks);
         Assert.NotEmpty(tasks);
-        Assert.Equal(1, tasks.Count());
+        Assert.Single(tasks);
         Assert.Equal(createdTask.Id, tasks.First().Id);
         Assert.Equal(createdTask.Name, tasks.First().Name);
         Assert.Equal(createdTask.Description, tasks.First().Description);
@@ -182,5 +203,14 @@ public class IntegrationTests : IClassFixture<WebApplicationFactory<Program>>,
         Assert.Equal(createdTask.Id, secondUpdatedTask.Id);
         Assert.NotEqual(createdTask.Status, secondUpdatedTask.Status);
         Assert.Equal(Status.Completed.ToString(), secondUpdatedTask.Status);
+
+        //Assert - Check if the message was received
+        Assert.NotEmpty(_receivedMessages);
+        var message = _receivedMessages.FirstOrDefault(m => m.Id == createdTask.Id);
+
+        Assert.NotNull(message);
+        Assert.Equal(createdTask.Id, message.Id);
+        Assert.Equal(createdTask.Name, message.Name);
+        Assert.Equal(createdTask.Description, message.Description);
     }
 }

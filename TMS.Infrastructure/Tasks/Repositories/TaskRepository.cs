@@ -1,13 +1,15 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using TMS.Application.Tasks.Repositories;
 using TMS.Domain.Tasks.Entities;
 using TMS.Infrastructure.EF;
 
 namespace TMS.Infrastructure.Tasks.Repositories;
 
-internal class TaskRepository(TasksDbContext dbContext) : ITaskRepository
+internal class TaskRepository(TasksDbContext dbContext, ILogger<TaskRepository> logger) : ITaskRepository
 {
     DbSet<TaskItem> Tasks => dbContext.TaskItems;
+
     public async Task<IEnumerable<TaskItem>> GetAllTasksAsync() => await Tasks.ToListAsync();
 
     public Task<TaskItem?> GetTaskByIdAsync(int id) => Tasks.SingleOrDefaultAsync(x => x.Id == id);
@@ -22,6 +24,7 @@ internal class TaskRepository(TasksDbContext dbContext) : ITaskRepository
         }
         catch (DbUpdateException ex)
         {
+            logger.LogError(ex, "Failed to create task.");
             throw new InvalidOperationException("Failed to create task.", ex);
         }
     }
@@ -34,10 +37,12 @@ internal class TaskRepository(TasksDbContext dbContext) : ITaskRepository
         }
         catch (DbUpdateConcurrencyException ex)
         {
+            logger.LogError(ex, "Failed to update task.");
             throw new InvalidOperationException("Failed to update task.", ex);
         }
         catch (DbUpdateException ex)
         {
+            logger.LogError(ex, "Failed to update task.");
             throw new InvalidOperationException("Failed to update task.", ex);
         }
     }

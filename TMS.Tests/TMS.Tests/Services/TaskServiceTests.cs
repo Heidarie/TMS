@@ -107,7 +107,7 @@ public class TaskServiceTests
         var taskDto = _taskDtoBuilder.WithId(1).WithDescription("Test Description").WithName("Test").Build();
 
         _taskRepositoryMock.Setup(repo => repo.GetTaskByIdAsync(It.IsAny<int>()))
-            .Returns(Task.FromResult(taskItem))
+            .ReturnsAsync(taskItem)
             .Verifiable();
 
         _taskRepositoryMock.Setup(repo => repo.UpdateTaskAsync())
@@ -138,7 +138,7 @@ public class TaskServiceTests
         var taskDto = _taskDtoBuilder.WithId(1).WithDescription("Test Description").WithName("Test").WithStatus(Status.InProgress).Build();
 
         _taskRepositoryMock.Setup(repo => repo.GetTaskByIdAsync(It.IsAny<int>()))
-            .Returns(Task.FromResult(taskItem))
+            .ReturnsAsync(taskItem)
             .Verifiable();
 
         _taskRepositoryMock.Setup(repo => repo.UpdateTaskAsync())
@@ -168,7 +168,7 @@ public class TaskServiceTests
         var taskItem = new TaskItem(1, "Test", "Test Description", Status.Completed);
 
         _taskRepositoryMock.Setup(repo => repo.GetTaskByIdAsync(It.IsAny<int>()))
-            .Returns(Task.FromResult(taskItem))
+            .ReturnsAsync(taskItem)
             .Verifiable();
 
         // Act, Assert

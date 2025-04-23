@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Moq;
 using TMS.Application.Tasks.Repositories;
 using TMS.Domain.Tasks.Entities;
@@ -12,11 +13,12 @@ public class TaskRepositoryTests
 {
     private readonly ITaskRepository _sut;
     private readonly TasksDbContext _dbContext;
+    private readonly Mock<ILogger<TaskRepository>> _loggerMock = new();
 
     public TaskRepositoryTests()
     {
         _dbContext = CreateDbContext();
-        _sut = new TaskRepository(_dbContext);
+        _sut = new TaskRepository(_dbContext, _loggerMock.Object);
     }
 
     private TasksDbContext CreateDbContext()
@@ -50,7 +52,7 @@ public class TaskRepositoryTests
         // Arrange
         var dbMock = new Mock<TasksDbContext>(new DbContextOptions<TasksDbContext>());
         var task = new TaskItem(1, "Test Task", "Test Description", Status.NotStarted);
-        var taskRepo = new TaskRepository(dbMock.Object);
+        var taskRepo = new TaskRepository(dbMock.Object, _loggerMock.Object);
 
         dbMock.Setup(db => db.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .ThrowsAsync(new DbUpdateException("Database not available"));
@@ -126,7 +128,7 @@ public class TaskRepositoryTests
     {
         // Arrange
         var dbMock = new Mock<TasksDbContext>(new DbContextOptions<TasksDbContext>());
-        var taskRepo = new TaskRepository(dbMock.Object);
+        var taskRepo = new TaskRepository(dbMock.Object, _loggerMock.Object);
         dbMock.Setup(db => db.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Throws(new DbUpdateException("Database not available"));
         
