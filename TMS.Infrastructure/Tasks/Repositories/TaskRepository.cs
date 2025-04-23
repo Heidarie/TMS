@@ -1,9 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Runtime.CompilerServices;
 using TMS.Application.Tasks.Repositories;
 using TMS.Domain.Tasks.Entities;
 using TMS.Infrastructure.EF;
 
+[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
 namespace TMS.Infrastructure.Tasks.Repositories;
 
 internal class TaskRepository(TasksDbContext dbContext, ILogger<TaskRepository> logger) : ITaskRepository
