@@ -67,7 +67,7 @@ public class TaskServiceTests
         var taskItem = TaskItem.Create("Test", "Test Description");
 
         _taskRepositoryMock.Setup(repo => repo.CreateTaskAsync(It.IsAny<TaskItem>()))
-            .Returns(Task.FromResult(taskItem));
+            .ReturnsAsync(taskItem);
         
         // Act
         var result = await _sut.CreateTaskAsync(taskDto);

@@ -5,5 +5,5 @@ namespace TMS.Application.Tasks.Mappers;
 
 public static class TaskDtoMapper
 {
-    public static TaskDto ToDto(TaskItem entity) => new(entity.Id, entity.Name, entity.Description, entity.Status.ToString());
+    public static TaskDto ToDto(TaskItem entity) => new(entity.Id ?? 0, entity.Name, entity.Description, entity.Status.ToString());
 }

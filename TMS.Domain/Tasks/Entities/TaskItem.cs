@@ -8,11 +8,9 @@ public class TaskItem : AggregateRoot
 {
     public TaskItem() { }
 
-    internal TaskItem(AggregateId id) => Id = id;
-
     public static TaskItem Create(string name, string description)
     {
-        var taskItem = new TaskItem(0);
+        var taskItem = new TaskItem();
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Task name cannot be empty.", nameof(name));
         if (string.IsNullOrWhiteSpace(description))

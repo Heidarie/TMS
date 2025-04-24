@@ -12,7 +12,8 @@ public class TaskItemConfiguration : IEntityTypeConfiguration<TaskItem>
         builder.HasKey(t => t.Id);
 
         builder.Property(t => t.Id).HasConversion(x => x.Value, x => new AggregateId(x))
-            .UseIdentityColumn();
+            .UseIdentityColumn()
+            .ValueGeneratedOnAdd();
 
         builder.Property(t => t.Name)
             .IsRequired()
