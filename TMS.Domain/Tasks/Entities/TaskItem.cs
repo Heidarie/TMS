@@ -7,19 +7,12 @@ namespace TMS.Domain.Tasks.Entities;
 public class TaskItem : AggregateRoot
 {
     public TaskItem() { }
-    public TaskItem(int id, string name, string description, Status status, int version = 0) : this(id)
-    {
-        Name = name;
-        Description = description;
-        Status = status;
-        Version = version;
-    }
 
     internal TaskItem(AggregateId id) => Id = id;
 
     public static TaskItem Create(string name, string description)
     {
-        var taskItem = new TaskItem(default!);
+        var taskItem = new TaskItem(0);
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Task name cannot be empty.", nameof(name));
         if (string.IsNullOrWhiteSpace(description))

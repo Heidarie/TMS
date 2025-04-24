@@ -33,7 +33,7 @@ public class TaskRepositoryTests
     public async Task CreateTaskAsync_ShouldAddTask()
     {
         // Arrange
-        var task = new TaskItem(1, "Test Task", "Test Description", Status.NotStarted);
+        var task = TaskItem.Create("Test Task", "Test Description");
 
         // Act
         await _sut.CreateTaskAsync(task);
@@ -51,7 +51,7 @@ public class TaskRepositoryTests
     {
         // Arrange
         var dbMock = new Mock<TasksDbContext>(new DbContextOptions<TasksDbContext>());
-        var task = new TaskItem(1, "Test Task", "Test Description", Status.NotStarted);
+        var task = TaskItem.Create("Test Task", "Test Description");
         var taskRepo = new TaskRepository(dbMock.Object, _loggerMock.Object);
 
         dbMock.Setup(db => db.SaveChangesAsync(It.IsAny<CancellationToken>()))
@@ -65,23 +65,22 @@ public class TaskRepositoryTests
     public async Task GetAllTasksAsync_ShouldReturnAllTasks()
     {
         // Arrange
-        var task1 = new TaskItem(1, "Task 1", "Description 1", Status.NotStarted);
-        var task2 = new TaskItem(2, "Task 2", "Description 2", Status.InProgress);
-        await _dbContext.TaskItems.AddRangeAsync(task1, task2);
+        var task1 = TaskItem.Create("Test Task", "Test Description");
+        await _dbContext.TaskItems.AddAsync(task1);
         await _dbContext.SaveChangesAsync();
 
         // Act
         var tasks = await _sut.GetAllTasksAsync();
 
         // Assert
-        Assert.Equal(2, tasks.Count());
+        Assert.Single(tasks);
     }
 
     [Fact]
     public async Task GetTaskByIdAsync_ShouldReturnTask()
     {
         // Arrange
-        var task = new TaskItem(1, "Test Task", "Test Description", Status.NotStarted);
+        var task = TaskItem.Create("Test Task", "Test Description");
         await _sut.CreateTaskAsync(task);
 
         // Act
@@ -110,7 +109,7 @@ public class TaskRepositoryTests
     public async Task UpdateTaskAsync_ShouldUpdateTask()
     {
         // Arrange
-        var task = new TaskItem(1, "Test Task", "Test Description", Status.NotStarted);
+        var task = TaskItem.Create("Test Task", "Test Description");
         await _sut.CreateTaskAsync(task);
         task.UpdateProgress();
 

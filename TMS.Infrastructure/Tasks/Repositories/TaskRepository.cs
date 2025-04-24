@@ -27,7 +27,7 @@ internal class TaskRepository(TasksDbContext dbContext, ILogger<TaskRepository> 
         catch (DbUpdateException ex)
         {
             logger.LogError(ex, "Failed to create task.");
-            throw new InvalidOperationException("Failed to create task.", ex);
+            throw new InvalidOperationException($"Failed to create task with name: {task.Name}.", ex);
         }
     }
 

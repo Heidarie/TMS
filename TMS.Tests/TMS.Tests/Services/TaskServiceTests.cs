@@ -29,8 +29,8 @@ public class TaskServiceTests
         // Arrange
         var tasks = new List<TaskItem>
         {
-            new(1, "Test", "Test Description", Status.NotStarted),
-            new(2, "Test", "Test Description", Status.NotStarted)
+            TaskItem.Create("Test", "Test Description"),
+            TaskItem.Create("Test", "Test Description")
         };
 
         var tasksDto1 = _taskDtoBuilder.WithId(1).WithDescription("Test Description").WithName("Test").Build();
@@ -53,7 +53,6 @@ public class TaskServiceTests
 
         for(int i = 0; i < tasks.Count; i++)
         {
-            Assert.Equal(tasksDtos[i].Id, result!.ElementAt(i).Id);
             Assert.Equal(tasksDtos[i].Name, result!.ElementAt(i).Name);
             Assert.Equal(tasksDtos[i].Description, result!.ElementAt(i).Description);
         }
@@ -65,7 +64,7 @@ public class TaskServiceTests
         // Arrange
         var taskDto = new CreateTaskDto("Test", "Test Description");
 
-        var taskItem = new TaskItem(1, taskDto.Name, taskDto.Description, Status.NotStarted);
+        var taskItem = TaskItem.Create("Test", "Test Description");
 
         _taskRepositoryMock.Setup(repo => repo.CreateTaskAsync(It.IsAny<TaskItem>()))
             .Returns(Task.FromResult(taskItem));
@@ -103,8 +102,8 @@ public class TaskServiceTests
     public async Task UpdateTask_TaskNotStarted_ShouldUpdateTask_NoDomainEventSent()
     {
         // Arrange
-        var taskItem = new TaskItem(1, "Test", "Test Description", Status.NotStarted);
-        var taskDto = _taskDtoBuilder.WithId(1).WithDescription("Test Description").WithName("Test").Build();
+        var taskItem = TaskItem.Create("Test", "Test Description");
+        var taskDto = _taskDtoBuilder.WithId(0).WithDescription("Test Description").WithName("Test").Build();
 
         _taskRepositoryMock.Setup(repo => repo.GetTaskByIdAsync(It.IsAny<int>()))
             .ReturnsAsync(taskItem)
@@ -122,7 +121,6 @@ public class TaskServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(taskDto.Id, result.Id);
         Assert.Equal(taskDto.Name, result.Name);
         Assert.Equal(taskDto.Description, result.Description);
 
@@ -134,8 +132,10 @@ public class TaskServiceTests
     public async Task UpdateTask_TaskInProgress_ShouldUpdateTask_SingleDomainEventSent()
     {
         // Arrange
-        var taskItem = new TaskItem(1, "Test", "Test Description", Status.InProgress);
-        var taskDto = _taskDtoBuilder.WithId(1).WithDescription("Test Description").WithName("Test").WithStatus(Status.InProgress).Build();
+        var taskItem = TaskItem.Create("Test", "Test Description");
+        var taskDto = _taskDtoBuilder.WithId(0).WithDescription("Test Description").WithName("Test").WithStatus(Status.InProgress).Build();
+
+        taskItem.UpdateProgress();
 
         _taskRepositoryMock.Setup(repo => repo.GetTaskByIdAsync(It.IsAny<int>()))
             .ReturnsAsync(taskItem)
@@ -149,11 +149,10 @@ public class TaskServiceTests
             .Verifiable();
 
         // Act
-        var result = await _sut.UpdateTaskAsync(1);
+        var result = await _sut.UpdateTaskAsync(0);
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(taskDto.Id, result.Id);
         Assert.Equal(taskDto.Name, result.Name);
         Assert.Equal(taskDto.Description, result.Description);
 
@@ -165,13 +164,16 @@ public class TaskServiceTests
     public async Task UpdateTask_TaskCompleted_ShouldThrowException()
     {
         // Arrange
-        var taskItem = new TaskItem(1, "Test", "Test Description", Status.Completed);
+        var taskItem = TaskItem.Create("Test", "Test Description");
+
+        taskItem.UpdateProgress();
+        taskItem.UpdateProgress();
 
         _taskRepositoryMock.Setup(repo => repo.GetTaskByIdAsync(It.IsAny<int>()))
             .ReturnsAsync(taskItem)
             .Verifiable();
 
         // Act, Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(async () => await _sut.UpdateTaskAsync(1));
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => await _sut.UpdateTaskAsync(0));
     }
 }

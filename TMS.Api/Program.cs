@@ -69,7 +69,7 @@ app.MapPost("/api/tasks", async (ITaskService taskService, CreateTaskDto dto) =>
     try
     {
         var task = await taskService.CreateTaskAsync(dto);
-        return Results.Created($"/api/tasks/{task.Id}", task);
+        return Results.Created("/api/tasks", task);
     }
     catch (DbUpdateException ex)
     {

@@ -30,7 +30,7 @@ public class AggregateId<T> : IEquatable<AggregateId<T>>
 
 public class AggregateId : AggregateId<int>
 {
-    public AggregateId() : base(default!) { }
+    public AggregateId() : base(default) { }
     public AggregateId(int value) : base(value) { }
 
     public static implicit operator int(AggregateId id) => id.Value;
